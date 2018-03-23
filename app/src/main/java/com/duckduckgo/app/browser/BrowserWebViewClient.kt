@@ -18,11 +18,9 @@ package com.duckduckgo.app.browser
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.support.annotation.WorkerThread
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -76,12 +74,20 @@ class BrowserWebViewClient @Inject constructor(
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        if(url == ERROR_PAGE_URL) {
+            Timber.i("Showing error page - don't treat this as a normal page load")
+            return
+        }
         currentUrl = url
         webViewClientListener?.loadingStarted()
         webViewClientListener?.urlChanged(url)
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {
+        if(url == ERROR_PAGE_URL) {
+            Timber.i("Loaded error page - don't treat this a normal page finished event")
+            return
+        }
         webViewClientListener?.loadingFinished()
     }
 
@@ -89,6 +95,33 @@ class BrowserWebViewClient @Inject constructor(
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
         Timber.v("Intercepting resource ${request.url} on page $currentUrl")
         return webViewRequestInterceptor.shouldIntercept(request, webView, currentUrl, webViewClientListener)
+    }
+
+    /**
+     * This is the deprecated method for receiving errors - still needed for < Marshmallow
+     * Note this will only trigger for the main page failing - not individual page resources.
+     */
+    @Suppress("OverridingDeprecatedMember")
+    override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+        Timber.i("onReceivedError legacy callback - [$errorCode]- $description - $failingUrl")
+        view?.loadUrl(ERROR_PAGE_URL)
+    }
+
+    /**
+     * This is the new method for receiving errors - will trigger for errors >= Marshmallow
+     * Note this will trigger for all failed resources on a page - including the ones failing because we've blocked them.
+     */
+    override fun onReceivedError(webView: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+        Timber.i("onReceivedError - ${error.formattedMessage(request)}")
+
+        if(request?.isForMainFrame == true) {
+            webView?.loadUrl(ERROR_PAGE_URL)
+        }
+    }
+
+    override fun onReceivedHttpError(webView: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+        Timber.i("onReceivedHttpError")
+        webView?.loadUrl(ERROR_PAGE_URL)
     }
 
     /**
@@ -100,4 +133,16 @@ class BrowserWebViewClient @Inject constructor(
         function()
         return true
     }
+}
+
+private fun WebResourceError?.formattedMessage(request: WebResourceRequest?): String {
+    if(this == null) {
+        return "Error is null"
+    }
+
+    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        return "Error cannot be extracted on this SDK version"
+    }
+
+    return "[$errorCode] - $description - main request=${request?.isForMainFrame} - ${request?.url}"
 }

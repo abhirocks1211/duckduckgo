@@ -36,6 +36,9 @@ import android.webkit.WebView
  *
  * Originally based on https://github.com/takahirom/webview-in-coordinatorlayout for scrolling behaviour
  */
+
+const val ERROR_PAGE_URL = "file:///android_asset/load_page_error.html"
+
 class DuckDuckGoWebView : WebView, NestedScrollingChild {
     private var lastY: Int = 0
     private val scrollOffset = IntArray(2)
@@ -58,7 +61,6 @@ class DuckDuckGoWebView : WebView, NestedScrollingChild {
 
         return inputConnection
     }
-
 
     @TargetApi(Build.VERSION_CODES.O)
     private fun addNoPersonalisedFlag(outAttrs: EditorInfo) {
@@ -137,4 +139,12 @@ class DuckDuckGoWebView : WebView, NestedScrollingChild {
 
     override fun dispatchNestedPreFling(velocityX: Float, velocityY: Float): Boolean =
             nestedScrollHelper.dispatchNestedPreFling(velocityX, velocityY)
+
+    fun reloadUrl(url: String) {
+        if(url.isBlank()) {
+            reload()
+        } else {
+            loadUrl(url)
+        }
+    }
 }

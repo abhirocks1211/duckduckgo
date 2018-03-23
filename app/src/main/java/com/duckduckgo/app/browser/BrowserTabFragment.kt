@@ -39,7 +39,10 @@ import android.text.Editable
 import android.view.*
 import android.view.View.VISIBLE
 import android.view.inputmethod.EditorInfo
-import android.webkit.*
+import android.webkit.URLUtil
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
 import android.webkit.WebView.FindListener
 import android.widget.EditText
 import android.widget.TextView
@@ -108,7 +111,7 @@ class BrowserTabFragment : Fragment(), FindListener {
     private val fireMenu: MenuItem?
         get() = toolbar.menu.findItem(R.id.fire)
 
-    private var webView: WebView? = null
+    private var webView: DuckDuckGoWebView? = null
 
     private val findInPageTextWatcher = object : TextChangedWatcher() {
         override fun afterTextChanged(editable: Editable) {
@@ -165,7 +168,7 @@ class BrowserTabFragment : Fragment(), FindListener {
         popupMenu.apply {
             onMenuItemClicked(view.forwardPopupMenuItem) { webView?.goForward() }
             onMenuItemClicked(view.backPopupMenuItem) { webView?.goBack() }
-            onMenuItemClicked(view.refreshPopupMenuItem) { webView?.reload() }
+            onMenuItemClicked(view.refreshPopupMenuItem) { webView?.reloadUrl(omnibarTextInput.text.toString()) }
             onMenuItemClicked(view.tabsMenuItem) { browserActivity?.launchTabSwitcher() }
             onMenuItemClicked(view.newTabPopupMenuItem) { browserActivity?.launchNewTab() }
             onMenuItemClicked(view.bookmarksPopupMenuItem) { browserActivity?.launchBookmarks() }
@@ -207,7 +210,7 @@ class BrowserTabFragment : Fragment(), FindListener {
     }
 
     fun refresh() {
-        webView?.reload()
+        webView?.reloadUrl(omnibarTextInput.text.toString())
     }
 
     private fun processCommand(it: Command?) {
@@ -510,7 +513,7 @@ class BrowserTabFragment : Fragment(), FindListener {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
-        webView = layoutInflater.inflate(R.layout.include_duckduckgo_browser_webview, webViewContainer, true).findViewById(R.id.browserWebView) as WebView
+        webView = layoutInflater.inflate(R.layout.include_duckduckgo_browser_webview, webViewContainer, true).findViewById(R.id.browserWebView) as DuckDuckGoWebView
         webView?.let {
             userAgentProvider = UserAgentProvider(it.settings.userAgentString)
 
