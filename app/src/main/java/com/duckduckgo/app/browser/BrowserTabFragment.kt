@@ -47,6 +47,7 @@ import android.webkit.WebView
 import android.webkit.WebView.FindListener
 import android.widget.EditText
 import android.widget.TextView
+import androidx.view.doOnLayout
 import androidx.view.isVisible
 import androidx.view.postDelayed
 import com.duckduckgo.app.bookmarks.ui.SaveBookmarkDialogFragment
@@ -367,6 +368,14 @@ class BrowserTabFragment : Fragment(), FindListener {
         }
 
         renderFindInPageState(viewState.findInPage)
+        renderSwipeToRefresh(viewState.browserShowing)
+    }
+
+    private fun renderSwipeToRefresh(browserShowing: Boolean) {
+        swipeToRefresh.isEnabled = browserShowing
+        if (!browserShowing) {
+            swipeToRefresh.isRefreshing = false
+        }
     }
 
     private fun renderToolbarButtons(viewState: ViewState) {
@@ -473,6 +482,11 @@ class BrowserTabFragment : Fragment(), FindListener {
                 privacyGradeButton?.setImageDrawable(drawable)
             }
         })
+
+        swipeToRefresh.setOnRefreshListener {
+            swipeToRefresh.postDelayed({ swipeToRefresh.isRefreshing = false  }, SWIPE_REFRESH_HIDE_DELAY)
+            webView?.reload()
+        }
     }
 
     private fun configureFindInPage() {
@@ -557,6 +571,15 @@ class BrowserTabFragment : Fragment(), FindListener {
             registerForContextMenu(it)
 
             it.setFindListener(this)
+
+            // restrict swipe to refresh so that it only happens when fully scrolled to top of web page
+            webView?.doOnLayout {
+                it.viewTreeObserver.addOnScrollChangedListener {
+                    swipeToRefresh?.post {
+                        swipeToRefresh.isEnabled = it.scrollY == 0
+                    }
+                }
+            }
         }
     }
 
@@ -778,9 +801,11 @@ class BrowserTabFragment : Fragment(), FindListener {
         private const val ADD_BOOKMARK_FRAGMENT_TAG = "ADD_BOOKMARK"
         private const val QUERY_EXTRA_ARG = "QUERY_EXTRA_ARG"
         private const val KEYBOARD_DELAY = 200L
+        private const val SWIPE_REFRESH_HIDE_DELAY = 1_000L
 
         private const val REQUEST_CODE_CHOOSE_FILE = 100
         private const val PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 200
+
 
         fun newInstance(tabId: String, query: String? = null): BrowserTabFragment {
             val fragment = BrowserTabFragment()
