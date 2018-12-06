@@ -554,6 +554,7 @@ class BrowserTabViewModel(
     }
 
     fun onWebSessionRestored() {
+        Timber.d("onWebSessionRestored")
         globalLayoutState.value = GlobalLayoutViewState(isNewTabState = false)
     }
 

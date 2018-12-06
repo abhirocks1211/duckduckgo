@@ -36,10 +36,15 @@ import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.APP_VERSION
 import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.ERROR_CODE
 import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.URL
 import com.duckduckgo.app.statistics.store.StatisticsDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.share
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.concurrent.thread
+import kotlin.coroutines.CoroutineContext
 
 
 class BrowserWebViewClient @Inject constructor(
@@ -78,7 +83,6 @@ class BrowserWebViewClient @Inject constructor(
      */
     private fun shouldOverride(webView: WebView, url: Uri): Boolean {
         Timber.v("shouldOverride $url")
-
         val urlType = specialUrlDetector.determineType(url)
 
         return when (urlType) {
@@ -91,21 +95,17 @@ class BrowserWebViewClient @Inject constructor(
             }
             is SpecialUrlDetector.UrlType.Unknown -> {
                 Timber.w("Unable to process link type for ${urlType.url}")
-                webView.loadUrl(webView.originalUrl)
                 return false
             }
             is SpecialUrlDetector.UrlType.SearchQuery -> {
-                updateJSInterface(webView, url)
                 return false
             }
             is SpecialUrlDetector.UrlType.Web -> {
                 if (requestRewriter.shouldRewriteRequest(url)) {
                     val newUri = requestRewriter.rewriteRequestWithCustomQueryParams(url)
                     webView.loadUrl(newUri.toString())
-                    updateJSInterface(webView, newUri)
                     return true
                 }
-                updateJSInterface(webView, url)
                 return false
             }
         }
@@ -157,6 +157,11 @@ class BrowserWebViewClient @Inject constructor(
     @WorkerThread
     override fun shouldInterceptRequest(webView: WebView, request: WebResourceRequest): WebResourceResponse? {
         Timber.v("Intercepting resource ${request.url} on page $currentUrl")
+
+        GlobalScope.launch(Dispatchers.Main) {
+            updateJSInterface(webView, request.url)
+        }
+
         return requestInterceptor.shouldIntercept(request, webView, currentUrl, webViewClientListener)
     }
 
