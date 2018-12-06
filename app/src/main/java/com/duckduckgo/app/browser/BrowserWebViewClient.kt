@@ -17,6 +17,7 @@
 package com.duckduckgo.app.browser
 
 import android.annotation.TargetApi
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
@@ -26,6 +27,7 @@ import androidx.annotation.UiThread
 import androidx.annotation.WorkerThread
 import android.webkit.*
 import androidx.core.net.toUri
+import com.duckduckgo.app.global.AppUrl
 import com.duckduckgo.app.global.isHttps
 import com.duckduckgo.app.httpsupgrade.HttpsUpgrader
 import com.duckduckgo.app.statistics.pixels.Pixel
@@ -34,18 +36,20 @@ import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.APP_VERSION
 import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.ERROR_CODE
 import com.duckduckgo.app.statistics.pixels.Pixel.PixelParameter.URL
 import com.duckduckgo.app.statistics.store.StatisticsDataStore
+import org.jetbrains.anko.share
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.concurrent.thread
 
 
 class BrowserWebViewClient @Inject constructor(
-    private val requestRewriter: RequestRewriter,
-    private val specialUrlDetector: SpecialUrlDetector,
-    private val requestInterceptor: RequestInterceptor,
-    private val httpsUpgrader: HttpsUpgrader,
-    private val statisticsDataStore: StatisticsDataStore,
-    private val pixel: Pixel
+        private val context: Context,
+        private val requestRewriter: RequestRewriter,
+        private val specialUrlDetector: SpecialUrlDetector,
+        private val requestInterceptor: RequestInterceptor,
+        private val httpsUpgrader: HttpsUpgrader,
+        private val statisticsDataStore: StatisticsDataStore,
+        private val pixel: Pixel
 ) : WebViewClient() {
 
     var webViewClientListener: WebViewClientListener? = null
@@ -90,15 +94,33 @@ class BrowserWebViewClient @Inject constructor(
                 webView.loadUrl(webView.originalUrl)
                 return false
             }
-            is SpecialUrlDetector.UrlType.SearchQuery -> return false
+            is SpecialUrlDetector.UrlType.SearchQuery -> {
+                updateJSInterface(webView, url)
+                return false
+            }
             is SpecialUrlDetector.UrlType.Web -> {
                 if (requestRewriter.shouldRewriteRequest(url)) {
                     val newUri = requestRewriter.rewriteRequestWithCustomQueryParams(url)
                     webView.loadUrl(newUri.toString())
+                    updateJSInterface(webView, newUri)
                     return true
                 }
+                updateJSInterface(webView, url)
                 return false
             }
+        }
+    }
+
+    private fun updateJSInterface(webView: WebView, uri: Uri) {
+        Timber.d("updateJSInterface for ${uri}")
+            val name = "DDGMobile"
+        val host = AppUrl.Url.HOST
+        if (uri.host.endsWith(".${host}") || uri.host == host) {
+            Timber.d("updateJSInterface for ${uri} adding interface")
+            webView.addJavascriptInterface(DDGMobile(this), name)
+        } else {
+            Timber.d("updateJSInterface for ${uri} adding interface")
+            webView.removeJavascriptInterface(name)
         }
     }
 
@@ -215,5 +237,15 @@ class BrowserWebViewClient @Inject constructor(
     }
 
     data class BrowserNavigationOptions(val canGoBack: Boolean, val canGoForward: Boolean)
+
+    class DDGMobile(val webViewClient: BrowserWebViewClient) {
+
+        @JavascriptInterface
+        fun share(url: String) {
+            Timber.d("sharing url ${url}!!")
+            webViewClient.context.share(url, "")
+        }
+
+    }
 
 }
