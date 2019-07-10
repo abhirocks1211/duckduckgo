@@ -90,7 +90,7 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
     }
 
     private fun calculateNumberOfColumns(columnWidthDp: Int): Int {
-        val displayMetrics = resources.displayMetrics;
+        val displayMetrics = resources.displayMetrics
         val screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
         val numberOfColumns = (screenWidthDp / columnWidthDp + 0.5).toInt()
         return Math.min(MAX_COLUMNS, numberOfColumns)
@@ -174,7 +174,7 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
     }
 
     companion object {
-        private const val MAX_COLUMNS = 4
+        private const val MAX_COLUMNS = 3
 
         fun intent(context: Context): Intent {
             return Intent(context, TabSwitcherActivity::class.java)

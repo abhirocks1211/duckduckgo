@@ -18,9 +18,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="200dp"
-    android:layout_marginStart="8dp"
+    android:layout_marginStart="7dp"
     android:layout_marginTop="2dp"
-    android:layout_marginEnd="8dp"
+    android:layout_marginEnd="7dp"
     android:layout_marginBottom="10dp"
     android:elevation="2dp"
     app:cardBackgroundColor="@color/white"
@@ -65,20 +65,22 @@
             android:textIsSelectable="false"
             android:textSize="12sp"
             android:textStyle="normal"
+            app:layout_constraintBottom_toBottomOf="@id/favicon"
             app:layout_constraintEnd_toStartOf="@id/close"
             app:layout_constraintStart_toEndOf="@id/favicon"
-            app:layout_constraintBottom_toBottomOf="@id/favicon"
             app:layout_constraintTop_toTopOf="@id/favicon"
             tools:text="Slashdot" />
 
         <ImageView
             android:id="@+id/tabPreview"
             android:layout_width="0dp"
-            android:layout_height="120dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="11dp"
             android:importantForAccessibility="no"
+            android:scaleType="matrix"
+            android:src="@drawable/ic_globe_gray_16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:src="@drawable/ic_globe_gray_16dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/title" />
 

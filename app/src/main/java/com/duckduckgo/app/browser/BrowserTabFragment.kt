@@ -26,6 +26,7 @@ import android.appwidget.AppWidgetManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -48,10 +49,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.view.isEmpty
-import androidx.core.view.isNotEmpty
-import androidx.core.view.isVisible
-import androidx.core.view.postDelayed
+import androidx.core.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -75,6 +73,7 @@ import com.duckduckgo.app.browser.useragent.UserAgentProvider
 import com.duckduckgo.app.cta.ui.CtaConfiguration
 import com.duckduckgo.app.cta.ui.CtaViewModel
 import com.duckduckgo.app.global.ViewModelFactory
+import com.duckduckgo.app.global.image.GlideApp
 import com.duckduckgo.app.global.view.*
 import com.duckduckgo.app.privacy.model.PrivacyGrade
 import com.duckduckgo.app.privacy.renderer.icon
@@ -93,13 +92,12 @@ import kotlinx.android.synthetic.main.include_new_browser_tab.*
 import kotlinx.android.synthetic.main.include_omnibar_toolbar.*
 import kotlinx.android.synthetic.main.include_omnibar_toolbar.view.*
 import kotlinx.android.synthetic.main.popup_window_browser_menu.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.share
 import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 import kotlin.concurrent.thread
 import kotlin.coroutines.CoroutineContext
@@ -435,6 +433,40 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
             is Command.LaunchLegacyAddWidget -> launchLegacyAddWidget()
             is Command.RequiresAuthentication -> showAuthenticationDialog(it.request)
             is Command.SaveCredentials -> saveBasicAuthCredentials(it.request, it.credentials)
+            is Command.GenerateWebViewPreviewImage -> generateWebViewPreviewImage()
+        }
+    }
+
+    private fun generateWebViewPreviewImage() {
+        launch {
+            webView?.let {
+                val fullSize = withContext(Dispatchers.Main) {
+                    it.drawToBitmap()
+                }
+
+                val bitmap = withContext(Dispatchers.IO) {
+//                    val previewSize = 120.toPx()
+                    val resized = Bitmap.createScaledBitmap(fullSize, webView!!.width, webView!!.height, false)
+                    Timber.i("Full size bitmap: ${fullSize.byteCount}, reduced size: ${resized.byteCount}")
+                    return@withContext resized
+                }
+
+                val previewFileDestination = File(it.context.cacheDir, "tabPreviews")
+                previewFileDestination.mkdirs()
+
+                val previewFile = File(previewFileDestination, "$tabId.jpg")
+
+                val outputStream = FileOutputStream(previewFile)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                outputStream.flush()
+                outputStream.close()
+                Timber.i("Wrote bitmap preview to ${previewFile.absolutePath}")
+
+                GlideApp.with(requireContext())
+                    .load(bitmap)
+                    .centerCrop()
+                    .into(webViewPreview)
+            }
         }
     }
 

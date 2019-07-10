@@ -17,23 +17,25 @@
 package com.duckduckgo.app.tabs.ui
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.DrawableRes
-import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.duckduckgo.app.browser.R
 import com.duckduckgo.app.global.image.GlideApp
+import com.duckduckgo.app.global.performance.measureExecution
 import com.duckduckgo.app.tabs.model.TabEntity
 import kotlinx.android.synthetic.main.item_tab.view.*
+import java.io.File
 
-class TabSwitcherAdapter(private val context: Context, private val itemClickListener: TabSwitchedListener) : Adapter<TabSwitcherAdapter.TabViewHolder>() {
+
+class TabSwitcherAdapter(private val context: Context, private val itemClickListener: TabSwitchedListener) :
+    Adapter<TabSwitcherAdapter.TabViewHolder>() {
 
     private var data: List<TabEntity> = ArrayList()
     private var selectedTab: TabEntity? = null
@@ -50,6 +52,7 @@ class TabSwitcherAdapter(private val context: Context, private val itemClickList
         return data.size
     }
 
+
     override fun onBindViewHolder(holder: TabViewHolder, position: Int) {
 
         val tab = data[position]
@@ -57,30 +60,27 @@ class TabSwitcherAdapter(private val context: Context, private val itemClickList
         //holder.tabUnread.visibility = if (tab.viewed) View.INVISIBLE else View.VISIBLE
         //holder.root.setBackgroundResource(if (tab.tabId == selectedTab?.tabId) SELECTED_BACKGROUND else DEFAULT_BACKGROUND)
 
-        GlideApp.with(holder.root)
-            .load(tab.favicon())
+        val glide = GlideApp.with(holder.root)
+
+        glide.load(tab.favicon())
             .placeholder(R.drawable.ic_globe_gray_16dp)
             .error(R.drawable.ic_globe_gray_16dp)
             .into(holder.favicon)
 
-        holder.tabPreview.setImageResource(R.drawable.ic_globe_gray_16dp)
 
-//        GlideApp.with(holder.root)
-//            .load(R.drawable.ic_globe_gray_16dp)
-//            .into(holder.tabPreview)
+        val cacheDir = File(holder.root.context.cacheDir, "tabPreviews")
+        val cachedWebViewPreview = File(cacheDir, "${tab.tabId}.jpg")
+
+        measureExecution("Loaded with Glide") {
+            glide.load(cachedWebViewPreview)
+                .placeholder(R.drawable.ic_globe_gray_16dp)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(holder.tabPreview)
+        }
+
 
         attachClickListeners(holder, tab)
-
-        val randomColorList = listOf(
-            R.color.cornflowerBlue,
-            R.color.brickOrange,
-            R.color.midGreen,
-            R.color.coolGray
-        )
-
-        val color = position % randomColorList.size
-        val tint = ContextCompat.getColor(context, randomColorList[color])
-        ImageViewCompat.setImageTintList(holder.tabPreview, ColorStateList.valueOf(tint))
     }
 
     private fun attachClickListeners(holder: TabViewHolder, tab: TabEntity) {
