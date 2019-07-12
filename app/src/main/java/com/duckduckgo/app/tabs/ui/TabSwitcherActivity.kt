@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.ItemTouchHelper.LEFT
 import androidx.recyclerview.widget.ItemTouchHelper.RIGHT
 import androidx.recyclerview.widget.RecyclerView
 import com.duckduckgo.app.browser.R
+import com.duckduckgo.app.browser.tabpreview.WebViewPreviewPersister
 import com.duckduckgo.app.global.DuckDuckGoActivity
 import com.duckduckgo.app.global.view.ClearPersonalDataAction
 import com.duckduckgo.app.global.view.FireDialog
@@ -46,6 +47,7 @@ import org.jetbrains.anko.longToast
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.min
 
 class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitchedListener, CoroutineScope {
 
@@ -55,9 +57,14 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
     @Inject
     lateinit var clearPersonalDataAction: ClearPersonalDataAction
 
+    @Inject
+    lateinit var webViewPreviewPersister: WebViewPreviewPersister
+
     private val viewModel: TabSwitcherViewModel by bindViewModel()
 
-    private val tabsAdapter = TabSwitcherAdapter(this, this)
+    private val tabsAdapter: TabSwitcherAdapter by lazy {
+        TabSwitcherAdapter(this, this, webViewPreviewPersister)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

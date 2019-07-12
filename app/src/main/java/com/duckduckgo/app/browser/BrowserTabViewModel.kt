@@ -795,5 +795,9 @@ class BrowserTabViewModel(
     override fun cancelAuthentication(request: BasicAuthenticationRequest) {
         request.handler.cancel()
     }
+
+    fun updateTabPreview(tabId: String, fileName: String) {
+        tabRepository.updateTabPreviewImage(tabId, fileName)
+    }
 }
 

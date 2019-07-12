@@ -27,14 +27,21 @@ import androidx.recyclerview.widget.RecyclerView.Adapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.duckduckgo.app.browser.R
+import com.duckduckgo.app.browser.tabpreview.WebViewPreviewPersister
 import com.duckduckgo.app.global.image.GlideApp
-import com.duckduckgo.app.global.performance.measureExecution
+import com.duckduckgo.app.global.image.GlideRequests
+import com.duckduckgo.app.global.view.gone
+import com.duckduckgo.app.global.view.show
 import com.duckduckgo.app.tabs.model.TabEntity
 import kotlinx.android.synthetic.main.item_tab.view.*
 import java.io.File
 
 
-class TabSwitcherAdapter(private val context: Context, private val itemClickListener: TabSwitchedListener) :
+class TabSwitcherAdapter(
+    private val context: Context,
+    private val itemClickListener: TabSwitchedListener,
+    private val webViewPreviewPersister: WebViewPreviewPersister
+) :
     Adapter<TabSwitcherAdapter.TabViewHolder>() {
 
     private var data: List<TabEntity> = ArrayList()
@@ -44,7 +51,14 @@ class TabSwitcherAdapter(private val context: Context, private val itemClickList
         val inflater = LayoutInflater.from(parent.context)
         val root = inflater.inflate(R.layout.item_tab, parent, false)
         //return TabViewHolder(root, root.favicon, root.tabPreview, root.title, root.close, root.tabUnread)
-        return TabViewHolder(root, root.favicon, root.tabPreview, root.title, root.close)
+        return TabViewHolder(
+            root = root,
+            favicon = root.favicon,
+            tabPreview = root.tabPreview,
+            tabPreviewPlaceholder = root.tabPreviewPlaceholder,
+            title = root.title,
+            close = root.close
+        )
         //return TabViewHolder(root)
     }
 
@@ -68,19 +82,31 @@ class TabSwitcherAdapter(private val context: Context, private val itemClickList
             .into(holder.favicon)
 
 
-        val cacheDir = File(holder.root.context.cacheDir, "tabPreviews")
-        val cachedWebViewPreview = File(cacheDir, "${tab.tabId}.jpg")
-
-        measureExecution("Loaded with Glide") {
-            glide.load(cachedWebViewPreview)
-                .placeholder(R.drawable.ic_globe_gray_16dp)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
-                .into(holder.tabPreview)
-        }
-
+        loadTabPreviewImage(tab, glide, holder)
 
         attachClickListeners(holder, tab)
+    }
+
+    private fun loadTabPreviewImage(tab: TabEntity, glide: GlideRequests, holder: TabViewHolder) {
+        initialiseWebViewPreviewImages(holder)
+
+        val previewFile = tab.tabPreviewFile ?: return
+        val cachedWebViewPreview = File(webViewPreviewPersister.fullPathForFile(previewFile))
+        if (!cachedWebViewPreview.exists()) {
+            return
+        }
+
+        holder.tabPreview.show()
+        glide.load(cachedWebViewPreview)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
+            .listener(WebViewPreviewGlideListener(holder))
+            .into(holder.tabPreview)
+    }
+
+    private fun initialiseWebViewPreviewImages(holder: TabViewHolder) {
+        holder.tabPreviewPlaceholder.show()
+        holder.tabPreview.gone()
     }
 
     private fun attachClickListeners(holder: TabViewHolder, tab: TabEntity) {
@@ -113,6 +139,7 @@ class TabSwitcherAdapter(private val context: Context, private val itemClickList
         val root: View,
         val favicon: ImageView,
         val tabPreview: ImageView,
+        val tabPreviewPlaceholder: ImageView,
         val title: TextView,
         val close: ImageView/*,
         val tabUnread: View*/
