@@ -21,7 +21,7 @@ import android.view.View
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
-import com.duckduckgo.app.browser.BrowserWebViewClient.*
+import com.duckduckgo.app.browser.BrowserWebViewClient.WebViewNavigationOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
