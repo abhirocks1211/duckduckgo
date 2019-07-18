@@ -18,6 +18,7 @@ package com.duckduckgo.app.tabs.ui
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Canvas
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -25,8 +26,7 @@ import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.ItemTouchHelper.LEFT
-import androidx.recyclerview.widget.ItemTouchHelper.RIGHT
+import androidx.recyclerview.widget.ItemTouchHelper.*
 import androidx.recyclerview.widget.RecyclerView
 import com.duckduckgo.app.browser.R
 import com.duckduckgo.app.browser.tabpreview.WebViewPreviewPersister
@@ -48,6 +48,7 @@ import org.jetbrains.anko.longToast
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.abs
 import kotlin.math.min
 
 class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitchedListener, CoroutineScope {
@@ -96,6 +97,22 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val tab = tabsAdapter.getTab(viewHolder.adapterPosition)
                 onTabDeleted(tab)
+            }
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                if (actionState == ACTION_STATE_SWIPE) {
+                    val alpha = 1 - (abs(dX) / (recyclerView.width / numberColumns))
+                    viewHolder.itemView.alpha = alpha
+                }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
         })
         swipeListener.attachToRecyclerView(tabsRecycler)
