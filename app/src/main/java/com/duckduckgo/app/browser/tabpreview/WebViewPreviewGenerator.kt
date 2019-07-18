@@ -42,8 +42,21 @@ class FileBasedWebViewPreviewGenerator : WebViewPreviewGenerator {
 
     private suspend fun convertWebViewToBitmap(webView: WebView): Bitmap {
         return withContext(Dispatchers.Main) {
-            webView.drawToBitmap()
+            disableScrollbars(webView)
+            val bm = webView.drawToBitmap()
+            enableScrollbars(webView)
+            return@withContext bm
         }
+    }
+
+    private fun enableScrollbars(webView: WebView) {
+        webView.isVerticalScrollBarEnabled = true
+        webView.isHorizontalScrollBarEnabled = true
+    }
+
+    private fun disableScrollbars(webView: WebView) {
+        webView.isVerticalScrollBarEnabled = false
+        webView.isHorizontalScrollBarEnabled = false
     }
 
     private suspend fun scaleBitmap(fullSize: Bitmap, webView: WebView): Bitmap {
