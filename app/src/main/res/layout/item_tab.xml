@@ -17,24 +17,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
+    android:layout_height="wrap_content"
     android:layout_marginStart="7dp"
     android:layout_marginTop="2dp"
     android:layout_marginEnd="7dp"
     android:layout_marginBottom="10dp"
     android:elevation="2dp"
     app:cardBackgroundColor="?attr/colorPrimary"
-    app:cardCornerRadius="6dp">
+    app:cardCornerRadius="6dp"
+    app:strokeColor="?attr/normalTextColor"
+    tools:strokeWidth="3dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cardContentsContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_margin="3dp">
 
         <ImageView
             android:id="@+id/favicon"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:contentDescription="@string/faviconContentDescription"
             android:src="@drawable/ic_globe_gray_16dp"
@@ -45,6 +49,7 @@
             android:id="@+id/close"
             android:layout_width="24dp"
             android:layout_height="0dp"
+            android:layout_marginEnd="6dp"
             android:background="?selectableItemBackground"
             android:contentDescription="@string/closeContentDescription"
             android:scaleType="center"
@@ -74,7 +79,7 @@
         <ImageView
             android:id="@+id/tabPreview"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="170dp"
             android:layout_marginTop="11dp"
             android:importantForAccessibility="no"
             android:scaleType="matrix"
@@ -86,7 +91,7 @@
         <ImageView
             android:id="@+id/tabPreviewPlaceholder"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="170dp"
             android:importantForAccessibility="no"
             android:src="@drawable/ic_tab_placeholder"
             android:tint="?attr/tabPlaceholderTintColor"

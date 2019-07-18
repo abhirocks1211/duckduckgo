@@ -46,5 +46,6 @@
     <attr name="feedbackEditTextBackgroundColor" format="color" />
     <attr name="feedbackEditTextHintColor" format="color" />
     <attr name="tabPlaceholderTintColor" format="color" />
+    <attr name="tabCardBackgroundColor" format="color" />
 
 </resources>

@@ -63,7 +63,9 @@
         <item name="feedbackListItemSeparatorColor">@color/charcoalGrey</item>
         <item name="feedbackEditTextBackgroundColor">@color/almostBlack</item>
         <item name="feedbackEditTextHintColor">@color/grayish</item>
+
         <item name="tabPlaceholderTintColor">@color/brownishGrayTwo</item>
+        <item name="tabCardBackgroundColor">@color/almostBlack</item>
     </style>
 
     <style name="AppTheme.Dark" parent="AppTheme.BaseDark" />
@@ -117,7 +119,9 @@
         <item name="feedbackListItemSeparatorColor">@color/whiteSix</item>
         <item name="feedbackEditTextBackgroundColor">@color/whiteFive</item>
         <item name="feedbackEditTextHintColor">@color/warmerGray</item>
+
         <item name="tabPlaceholderTintColor">@color/grayishThree</item>
+        <item name="tabCardBackgroundColor">@color/white</item>
     </style>
 
     <style name="AppTheme.Light" parent="AppTheme.BaseLight">
