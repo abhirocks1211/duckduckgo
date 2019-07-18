@@ -21,6 +21,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -60,14 +61,17 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
     @Inject
     lateinit var webViewPreviewPersister: WebViewPreviewPersister
 
+    private var loadingTabs = true
+
     private val viewModel: TabSwitcherViewModel by bindViewModel()
 
     private val tabsAdapter: TabSwitcherAdapter by lazy {
-        TabSwitcherAdapter(this, this, webViewPreviewPersister)
+        TabSwitcherAdapter(this, webViewPreviewPersister)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        postponeEnterTransition()
         setContentView(R.layout.activity_tab_switcher)
         configureToolbar()
         configureRecycler()
@@ -81,15 +85,16 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
 
     private fun configureRecycler() {
         val numberColumns = calculateNumberOfColumns(180)
-        tabsRecycler.layoutManager = GridLayoutManager(this, numberColumns)
+        val layoutManager = GridLayoutManager(this, numberColumns)
+        tabsRecycler.layoutManager = layoutManager
         tabsRecycler.adapter = tabsAdapter
+
+        // wait until recycler view is ready before allow Activity transition animation to run
+        tabsRecycler.doOnPreDraw { startPostponedEnterTransition() }
 
         val swipeListener = ItemTouchHelper(object : SwipeToDeleteCallback() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val adapterPosition = viewHolder.adapterPosition
-                Timber.i("onSwiped $adapterPosition")
                 val tab = tabsAdapter.getTab(viewHolder.adapterPosition)
-                tabsAdapter.notifyItemRemoved(adapterPosition)
                 onTabDeleted(tab)
             }
         })
@@ -100,7 +105,7 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
         val displayMetrics = resources.displayMetrics
         val screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
         val numberOfColumns = (screenWidthDp / columnWidthDp + 0.5).toInt()
-        return Math.min(MAX_COLUMNS, numberOfColumns)
+        return min(MAX_COLUMNS, numberOfColumns)
     }
 
     private fun configureObservers() {
@@ -117,6 +122,15 @@ class TabSwitcherActivity : DuckDuckGoActivity(), TabSwitcherAdapter.TabSwitched
 
     private fun render() {
         tabsAdapter.updateData(viewModel.tabs.value, viewModel.selectedTab.value)
+
+        if (loadingTabs) {
+            loadingTabs = false
+
+            // ensure we show the currently selected tab on screen
+            val index = tabsAdapter.adapterPositionForTab(intent.getStringExtra("selected"))
+            Timber.i("selected tab is index $index in grid")
+            tabsRecycler.layoutManager?.scrollToPosition(index)
+        }
     }
 
     private fun processCommand(command: Command?) {

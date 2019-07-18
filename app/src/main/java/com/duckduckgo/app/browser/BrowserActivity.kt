@@ -44,7 +44,6 @@ import com.duckduckgo.app.privacy.ui.PrivacyDashboardActivity
 import com.duckduckgo.app.settings.SettingsActivity
 import com.duckduckgo.app.statistics.pixels.Pixel
 import com.duckduckgo.app.tabs.model.TabEntity
-import com.duckduckgo.app.tabs.ui.TabSwitcherActivity
 import kotlinx.android.synthetic.main.activity_browser.*
 import kotlinx.coroutines.*
 import org.jetbrains.anko.longToast
@@ -52,7 +51,7 @@ import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
-class BrowserActivity : DuckDuckGoActivity(), CoroutineScope {
+class BrowserActivity : DuckDuckGoActivity(), BrowserTabSwitchRequestCallback, CoroutineScope {
 
     override val coroutineContext: CoroutineContext
         get() = SupervisorJob() + Dispatchers.Main
@@ -271,10 +270,6 @@ class BrowserActivity : DuckDuckGoActivity(), CoroutineScope {
         dialog.show()
     }
 
-    fun launchTabSwitcher() {
-        startActivity(TabSwitcherActivity.intent(this))
-    }
-
     fun launchNewTab() {
         launch { viewModel.onNewTabRequested() }
     }
@@ -308,6 +303,10 @@ class BrowserActivity : DuckDuckGoActivity(), CoroutineScope {
         if (currentTab?.onBackPressed() != true) {
             super.onBackPressed()
         }
+    }
+
+    override fun switchTab(tabId: String) {
+        viewModel.switchTab(tabId)
     }
 
     companion object {

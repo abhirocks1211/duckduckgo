@@ -198,4 +198,8 @@ class BrowserViewModel(
     override fun onUserCancelledGiveFeedbackDialog(promptCount: PromptCount) {
         onUserDeclinedToGiveFeedback(promptCount)
     }
+
+    fun switchTab(tabId: String) {
+        launch { tabRepository.select(tabId) }
+    }
 }

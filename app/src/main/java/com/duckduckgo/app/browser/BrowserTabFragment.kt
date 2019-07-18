@@ -77,7 +77,6 @@ import com.duckduckgo.app.browser.useragent.UserAgentProvider
 import com.duckduckgo.app.cta.ui.CtaConfiguration
 import com.duckduckgo.app.cta.ui.CtaViewModel
 import com.duckduckgo.app.global.ViewModelFactory
-import com.duckduckgo.app.global.image.GlideApp
 import com.duckduckgo.app.global.view.*
 import com.duckduckgo.app.privacy.model.PrivacyGrade
 import com.duckduckgo.app.privacy.renderer.icon
@@ -85,6 +84,7 @@ import com.duckduckgo.app.statistics.pixels.Pixel
 import com.duckduckgo.app.survey.model.Survey
 import com.duckduckgo.app.survey.ui.SurveyActivity
 import com.duckduckgo.app.tabs.model.TabEntity
+import com.duckduckgo.app.tabs.ui.TabSwitcherActivity
 import com.duckduckgo.app.widget.ui.AddWidgetInstructionsActivity
 import com.duckduckgo.widget.SearchWidgetLight
 import com.google.android.material.snackbar.Snackbar
@@ -108,6 +108,9 @@ import javax.inject.Inject
 import kotlin.concurrent.thread
 import kotlin.coroutines.CoroutineContext
 
+interface BrowserTabSwitchRequestCallback {
+    fun switchTab(tabId: String)
+}
 
 class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
 
@@ -238,7 +241,9 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
     private fun configureShowTabSwitcherListener() {
         tabsButton?.actionView?.setOnClickListener {
             generateWebViewPreviewImage()
-            browserActivity?.launchTabSwitcher()
+            val launchIntent = TabSwitcherActivity.intent(requireActivity())
+            launchIntent.putExtra("selected", tabId)
+            startActivityForResult(launchIntent, REQUEST_CODE_SWITCH_TAB)
         }
     }
 
@@ -458,10 +463,6 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
                     val fileName = previewPersister.save(bitmap, tabId)
                     viewModel.updateTabPreview(tabId, fileName)
 
-                    GlideApp.with(requireContext())
-                        .load(previewPersister.fullPathForFile(fileName))
-                        .centerCrop()
-                        .into(webViewPreview)
                 } catch (e: IllegalStateException) {
                     Timber.w(e, "Failed to extract bitmap from WebView")
                 }
@@ -518,8 +519,9 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == REQUEST_CODE_CHOOSE_FILE) {
-            handleFileUploadResult(resultCode, data)
+        when (requestCode) {
+            REQUEST_CODE_CHOOSE_FILE -> handleFileUploadResult(resultCode, data)
+            REQUEST_CODE_SWITCH_TAB -> handleSwitchTabResult(resultCode, data)
         }
     }
 
@@ -532,6 +534,14 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
 
         val uris = fileChooserIntentBuilder.extractSelectedFileUris(intent)
         pendingUploadTask?.onReceiveValue(uris)
+    }
+
+    private fun handleSwitchTabResult(resultCode: Int, data: Intent?) {
+        if (resultCode == RESULT_OK) {
+            val tabId = data?.getStringExtra("selected") ?: return
+            val tabSwitchListener = requireActivity() as BrowserTabSwitchRequestCallback
+            tabSwitchListener.switchTab(tabId)
+        }
     }
 
     private fun showToast(@StringRes messageId: Int) {
@@ -990,6 +1000,7 @@ class BrowserTabFragment : Fragment(), FindListener, CoroutineScope {
         private const val LAYOUT_TRANSITION_MS = 200L
 
         private const val REQUEST_CODE_CHOOSE_FILE = 100
+        private const val REQUEST_CODE_SWITCH_TAB = 101
         private const val PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 200
 
         private const val URL_BUNDLE_KEY = "url"

@@ -17,18 +17,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name="com.duckduckgo.app.DetailActivity"></activity>
+
         <meta-data
             android:name="android.webkit.WebView.MetricsOptOut"
-            android:value="true" />
-
-        <!-- Disable WorkManager's default initialization so we can use Dagger with it -->
+            android:value="true" /> <!-- Disable WorkManager's default initialization so we can use Dagger with it -->
         <provider
             android:name="androidx.work.impl.WorkManagerInitializer"
             android:authorities="com.duckduckgo.app.browser.workmanager-init"
             android:enabled="false"
             android:exported="false"
             tools:replace="android:authorities" />
-
         <!--
             To protect user privacy, disable SafeBrowsing which could send URLs to Google servers
             https://developer.android.com/reference/android/webkit/WebView
@@ -42,15 +41,14 @@
             android:label="@string/appName">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.duckduckgo.app.onboarding.ui.OnboardingActivity"
             android:label="@string/appName"
             android:theme="@style/AppTheme.Dark.Transparent" />
-
         <activity
             android:name=".BrowserActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -84,26 +82,31 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <activity android:name="com.duckduckgo.app.SelectedTextSearchActivity"
-            android:label="@string/systemTextSearchMessage"
-            android:exported="true">
+        <activity
+            android:name="com.duckduckgo.app.SelectedTextSearchActivity"
+            android:exported="true"
+            android:label="@string/systemTextSearchMessage">
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
             <!-- Allow app to respond to "web search" requests from system -->
             <intent-filter>
                 <action android:name="android.intent.action.WEB_SEARCH" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.duckduckgo.app.tabs.ui.TabSwitcherActivity"
             android:label="@string/tabActivityTitle" />
+        <activity
+            android:name="com.duckduckgo.app.MainActivity"
+            android:label="Test" />
         <activity
             android:name="com.duckduckgo.app.privacy.ui.PrivacyDashboardActivity"
             android:label="@string/privacyDashboardActivityTitle"
@@ -126,12 +129,12 @@
             android:parentActivityName=".BrowserActivity" />
         <activity
             android:name="com.duckduckgo.app.feedback.ui.common.FeedbackActivity"
-            android:windowSoftInputMode="adjustResize"
-            android:label="@string/feedbackActivityTitle" />
+            android:label="@string/feedbackActivityTitle"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="com.duckduckgo.app.brokensite.BrokenSiteActivity"
-            android:theme="@style/ModalCardTheme"
-            android:label="@string/brokenSiteHeading" />
+            android:label="@string/brokenSiteHeading"
+            android:theme="@style/ModalCardTheme" />
         <activity
             android:name="com.duckduckgo.app.survey.ui.SurveyActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -156,27 +159,26 @@
         <service
             android:name="com.duckduckgo.app.job.AppConfigurationJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <service android:name="com.duckduckgo.app.notification.NotificationHandlerService" />
 
         <receiver android:name="com.duckduckgo.widget.SearchWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
+
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/search_widget_info" />
         </receiver>
-
         <receiver android:name="com.duckduckgo.widget.SearchWidgetLight">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
+
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/search_widget_info_light" />
         </receiver>
-
     </application>
 
 </manifest>
